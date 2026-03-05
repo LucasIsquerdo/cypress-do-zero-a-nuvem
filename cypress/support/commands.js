@@ -33,4 +33,3 @@ Cypress.Commands.add('fillMandatoryFieldsAndSubmit', (data = {
     cy.get('#open-text-area').type(data.text)
     cy.get('#submit_btn').click()
 })
-

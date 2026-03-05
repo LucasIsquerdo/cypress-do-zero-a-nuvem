@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('Central de Atendimento ao Cliente TAT', () => {
   beforeEach(() => {
     cy.visit('./src/index.html')
@@ -46,7 +48,7 @@ describe('Central de Atendimento ao Cliente TAT', () => {
     cy.get('#lastName').type('Isquerdo')
     cy.get('#email').type('lucasisquerdo22@gmail.com')
     cy.get('#open-text-area').type('Obrigado!')
-    cy.get('#phone-checkbox').click()
+    cy.get('#phone-checkbox').check()
     cy.get('#submit_btn').click()
 
     cy.get('.error').should('be.visible')
@@ -142,7 +144,7 @@ describe('Central de Atendimento ao Cliente TAT', () => {
     .should('be.checked')
   })
 
-  it.only('marca cada tipo de atendimento', () => {
+  it('marca cada tipo de atendimento', () => {
     cy.get('input[type="radio"]')
       .each(typeOfService => {
         cy.wrap(typeOfService)
@@ -150,4 +152,63 @@ describe('Central de Atendimento ao Cliente TAT', () => {
           .should('be.checked')
       })
   })
+
+  it('marca ambos checkboxes, depois desmarca o último', () =>
+  {
+    cy.get('input[type="checkbox"]')
+      .as('checkboxes')
+      .check()
+      .should('be.checked')
+    
+    cy.get('@checkboxes')
+      .last()
+      .uncheck()
+      .should('not.be.checked')
+  })
+
+  it('seleciona um arquivo da pasta fixtures', () =>
+  {
+    cy.get('input[type="file"]')
+    .selectFile('cypress/fixtures/example.json')
+    .should(input=>{
+      expect(input[0].files[0].name).to.equal('example.json')
+      //aqui estamos acessando diretamente a estrutura do input, onde a propriedade FILES (array) tem dentro dela uma propriedade NAME que deve ser igual ao nome do arquivo
+    })
+  })
+
+  it('seleciona um arquivo simulando um drag-and-drop', () =>{
+    cy.get('input[type="file"]')
+    .selectFile('cypress/fixtures/example.json',{ action: 'drag-drop' })
+     .should(input=>{
+      expect(input[0].files[0].name).to.equal('example.json')
+    })
+    
+  })
+
+  it('seleciona um arquivo utilizando uma fixture para a qual foi dada um alias', () =>{
+     cy.fixture('example.json')
+        .as('arquivo')
+
+    cy.get('input[type="file"]')
+    .selectFile('@arquivo',{ action: 'drag-drop' })
+     .should(input=>{
+      expect(input[0].files[0].name).to.equal('example.json')
+    })
+  })
+
+  it.only('verifica que a política de privacidade abre em outra aba sem a necessidade de um clique', () =>{
+    cy.contains('a', 'Política de Privacidade') // não é indicado usar apenas o 'a' pois é muito genérico
+      .should('have.attr', 'href', 'privacy.html')
+      .and('have.attr', 'target', '_blank')
+  })
+
+  it.only('acessa a página da política de privacidade removendo o target e então clicando no link', () =>{
+    cy.contains('a', 'Política de Privacidade')
+      .invoke('removeAttr', 'target')
+      .click()
+      
+    cy.contains('h1', 'CAC TAT - Política de Privacidade')
+    .should('be.visible')
+  })
+
 })
