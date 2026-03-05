@@ -140,8 +140,8 @@ describe('Central de Atendimento ao Cliente TAT', () => {
 
   it('marca o tipo de atendimento "Feedback"', () => {
     cy.get('input[type="radio"], [value="feedback"]')
-    .check()
-    .should('be.checked')
+      .check()
+      .should('be.checked')
   })
 
   it('marca cada tipo de atendimento', () => {
@@ -153,62 +153,121 @@ describe('Central de Atendimento ao Cliente TAT', () => {
       })
   })
 
-  it('marca ambos checkboxes, depois desmarca o último', () =>
-  {
+  it('marca ambos checkboxes, depois desmarca o último', () => {
     cy.get('input[type="checkbox"]')
       .as('checkboxes')
       .check()
       .should('be.checked')
-    
+
     cy.get('@checkboxes')
       .last()
       .uncheck()
       .should('not.be.checked')
   })
 
-  it('seleciona um arquivo da pasta fixtures', () =>
-  {
+  it('seleciona um arquivo da pasta fixtures', () => {
     cy.get('input[type="file"]')
-    .selectFile('cypress/fixtures/example.json')
-    .should(input=>{
-      expect(input[0].files[0].name).to.equal('example.json')
-      //aqui estamos acessando diretamente a estrutura do input, onde a propriedade FILES (array) tem dentro dela uma propriedade NAME que deve ser igual ao nome do arquivo
-    })
+      .selectFile('cypress/fixtures/example.json')
+      .should(input => {
+        expect(input[0].files[0].name).to.equal('example.json')
+        //aqui estamos acessando diretamente a estrutura do input, onde a propriedade FILES (array) tem dentro dela uma propriedade NAME que deve ser igual ao nome do arquivo
+      })
   })
 
-  it('seleciona um arquivo simulando um drag-and-drop', () =>{
+  it('seleciona um arquivo simulando um drag-and-drop', () => {
     cy.get('input[type="file"]')
-    .selectFile('cypress/fixtures/example.json',{ action: 'drag-drop' })
-     .should(input=>{
-      expect(input[0].files[0].name).to.equal('example.json')
-    })
-    
+      .selectFile('cypress/fixtures/example.json', { action: 'drag-drop' })
+      .should(input => {
+        expect(input[0].files[0].name).to.equal('example.json')
+      })
+
   })
 
-  it('seleciona um arquivo utilizando uma fixture para a qual foi dada um alias', () =>{
-     cy.fixture('example.json')
-        .as('arquivo')
+  it('seleciona um arquivo utilizando uma fixture para a qual foi dada um alias', () => {
+    cy.fixture('example.json')
+      .as('arquivo')
 
     cy.get('input[type="file"]')
-    .selectFile('@arquivo',{ action: 'drag-drop' })
-     .should(input=>{
-      expect(input[0].files[0].name).to.equal('example.json')
-    })
+      .selectFile('@arquivo', { action: 'drag-drop' })
+      .should(input => {
+        expect(input[0].files[0].name).to.equal('example.json')
+      })
   })
 
-  it('verifica que a política de privacidade abre em outra aba sem a necessidade de um clique', () =>{
+  it('verifica que a política de privacidade abre em outra aba sem a necessidade de um clique', () => {
     cy.contains('a', 'Política de Privacidade') // não é indicado usar apenas o 'a' pois é muito genérico
       .should('have.attr', 'href', 'privacy.html')
       .and('have.attr', 'target', '_blank')
   })
 
-  it('acessa a página da política de privacidade removendo o target e então clicando no link', () =>{
+  it('acessa a página da política de privacidade removendo o target e então clicando no link', () => {
     cy.contains('a', 'Política de Privacidade')
       .invoke('removeAttr', 'target')
       .click()
-      
+
     cy.contains('h1', 'CAC TAT - Política de Privacidade')
-    .should('be.visible')
+      .should('be.visible')
   })
 
+  it('exibe mensagem por 3 segundos', () => {
+    cy.clock() // congela o relógio do navegador
+
+    cy.get('#firstName').type('Lucas')
+    cy.get('#lastName').type('Isquerdo')
+    cy.get('#email').type('lucasisquerdo22@gmail.com')
+    cy.get('#phone').type('18991275263')
+    cy.get('#open-text-area').type('Obrigado!')
+    cy.contains('button', 'Enviar').click()
+    cy.get('.success').should('be.visible')
+
+    cy.tick(3000) // avança o relógio três segundos (em milissegundos). Avanço este tempo para não perdê-lo esperando.
+
+    cy.get('.success').should('not.be.visible')
+  })
+
+  Cypress._.times(5, () => {
+    it('verifica que a política de privacidade abre em outra aba sem a necessidade de um clique', () => {
+      cy.contains('a', 'Política de Privacidade') // não é indicado usar apenas o 'a' pois é muito genérico
+        .should('have.attr', 'href', 'privacy.html')
+        .and('have.attr', 'target', '_blank')
+    })
+  })
+
+  it('exibe e oculta as mensagens de sucesso e erro usando .invoke()', () => {
+    cy.get('.success')
+      .should('not.be.visible')
+      .invoke('show')
+      .should('be.visible')
+      .and('contain', 'Mensagem enviada com sucesso.')
+      .invoke('hide')
+      .should('not.be.visible')
+    cy.get('.error')
+      .should('not.be.visible')
+      .invoke('show')
+      .should('be.visible')
+      .and('contain', 'Valide os campos obrigatórios!')
+      .invoke('hide')
+      .should('not.be.visible')
+  })
+
+  it('preenche o campo da área de texto usando o comando invoke', () => {
+    cy.get('#open-text-area')
+      .invoke('val', 'um texto qualquer')
+      .should('have.value', 'um texto qualquer')
+  })
+
+  it.only('faz uma requisição HTTP', ()=>{
+    cy.request('GET', 'https://cac-tat-v3.s3.eu-central-1.amazonaws.com/index.html')
+    .as('getRequest')
+    .its('status')
+    .should('be.equal', 200)
+
+    cy.get('@getRequest')
+    .its('statusText')
+    .should('be.equal', 'OK')
+
+     cy.get('@getRequest')
+    .its('body')
+    .should('include', 'CAC TAT')
+  })
 })
